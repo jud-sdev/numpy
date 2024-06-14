@@ -5176,7 +5176,6 @@ class MaskedArray(ndarray):
         See Also
         --------
         numpy.ma.dot : equivalent function
-
         """
         return dot(self, b, out=out, strict=strict)
 
@@ -5269,10 +5268,23 @@ class MaskedArray(ndarray):
         >>> marr = np.ma.array(np.arange(10), mask=[0,0,0,1,1,1,0,0,0,0])
         >>> marr.cumsum()
         masked_array(data=[0, 1, 3, --, --, --, 9, 16, 24, 33],
-                     mask=[False, False, False,  True,  True,  True, False, False,
-                           False, False],
-               fill_value=999999)
+            mask=[False, False, False,  True,  True,  True,
+                  False, False, False, False],
+            fill_value=999999)
 
+        Cumulative sum along a specific axis:
+
+        >>> marr = np.ma.array(np.arange(12).reshape(3,4),
+                               mask=[[0,0,0,1],[0,1,0,0],[0,0,0,0]])
+        >>> np.ma.cumsum(marr, axis=1)
+        masked_array(
+            data=[[0, 1, 3, --],
+                  [4, --, 10, 17],
+                  [8, 17, 27, 38]],
+            mask=[[False, False, False,  True],
+                  [False,  True, False, False],
+                  [False, False, False, False]],
+            fill_value=999999)
         """
         result = self.filled(0).cumsum(axis=axis, dtype=dtype, out=out)
         if out is not None:
@@ -5300,6 +5312,42 @@ class MaskedArray(ndarray):
         --------
         numpy.ndarray.prod : corresponding function for ndarrays
         numpy.prod : equivalent function
+
+        Examples
+        --------
+        Single axis:
+
+        >>> np.ma.prod([[1, 2], [3, 4]])
+        24
+
+        Multiple axes:
+
+        >>> np.ma.prod(np.ma.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]),
+                                    axis=(0, 2))
+        masked_array(data=[ 60, 672],
+            mask=False,
+            fill_value=999999)
+
+        Keeping dimensions:
+
+        >>> np.ma.prod(np.ma.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]),
+                        axis=(0, 2), keepdims=True)
+        masked_array(
+            data=[[[ 60],
+                   [672]]],
+            mask=False,
+            fill_value=999999)
+
+        With dtype:
+
+        >>> np.ma.prod(np.ma.array([1., 2., 3.]), dtype=np.float64)
+        6.0
+
+        Masked array:
+
+        >>> m = np.ma.array([1, 2, 3], mask=[True, False, False])
+        >>> np.ma.prod(m)
+        6
         """
         kwargs = {} if keepdims is np._NoValue else {'keepdims': keepdims}
 
@@ -8032,7 +8080,18 @@ def dot(a, b, strict=False, out=None):
       mask=[[ True,  True],
             [ True, False]],
       fill_value=999999)
+      
+    Dot product with an output array:
 
+    >>> a = np.ma.array([[1, 2], [3, 4]], mask=[[1, 0], [0, 0]])
+    >>> b = np.ma.array([[5, 6], [7, 8]], mask=[[0, 1], [0, 0]])
+    >>> np.ma.dot(a, b)
+    masked_array(
+      data=[[14, 16],
+            [43, 32]],
+      mask=[[False, False],
+            [False, False]],
+      fill_value=999999)
     """
     if strict is True:
         if np.ndim(a) == 0 or np.ndim(b) == 0:
